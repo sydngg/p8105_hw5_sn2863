@@ -1,7 +1,7 @@
 ---
-title: "p8105_hw5_sn2863"
-author: "Sydney Ng"
-date: "11/10/2020"
+title: "Homework 5 - Iteration"
+author: "Sydney Ng (uni: sn2863)"
+date: "Due 11/18/2020 by 10:00 pm ET"
 output: github_document
 ---
 
@@ -69,4 +69,30 @@ prop_results %>%
     caption = "caption here."
   )
 ```
+
+### Problem 2 and 3 notes from class
+```{r, eval=FALSE}
+# importing one dataset at a time...
+data_1 <- read_csv("./longitudinal_data/con_01.csv")
+
+#but, we want to start with a list of our file names!
+path_df <- tibble(path = list.files("longitudinal_data")) %>%
+  mutate(
+    path = str_c("longitudinal_data/", path),
+    data = map ( .......... ) # this is the hard part of the hw
+    )
+
+read.csv(path_df$path[[1]])
+
+# gotta tidy the rest of this dataset! there is a data organization problem, 
+# that comes up from time to time, that we also have to deal with for the homework!
+# we want one dataset that is tidy with all of the observations from all csv's
+```
+
+```{r}
+# simulations that will help clarify things that happen statistically
+
+```
+
+
 
