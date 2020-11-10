@@ -7,6 +7,7 @@ output: github_document
 
 ```{r setup, include=FALSE}
 library(tidyverse)
+library(purrr)
 ```
 
 ### Problem 1
@@ -25,11 +26,31 @@ homicide_df <-
   select(city_state, resolved) %>%
   filter(city_state != "Tulsa_AL")
 
-homicide_df %>%
+aggregate_df <-
+  homicide_df %>%
   group_by(city_state) %>%
   summarize(
     homicide_total = n(),
-    homocide_unsolved = sum(resolved == "Unsolved")
+    homicide_unsolved = sum(resolved == "Unsolved")
   )
+```
+
+Can we do a test for proportions for a specific city?
+```{r}
+prop.test(
+  aggregate_df %>% filter(city_state=="Baltimore_MD") %>% pull(homicide_unsolved),
+  aggregate_df %>% filter(city_state=="Baltimore_MD") %>% pull(homicide_total)) %>%
+  broom::tidy()
+```
+
+Iterate:
+```{r}
+aggregate_df %>%
+  mutate(
+    prop_tests = map2(.x = homicide_unsolved, .y = homicide_total,
+                      ~prop.test(x = .x, n = .y)),
+    tidy_tests = map(.x = prop_tests, ~broom::tidy(.x))
+  ) %>%
+  pull(tidy_tests)
 ```
 
