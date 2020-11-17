@@ -133,54 +133,28 @@ Looking at the two panels of the spaghetti plot, we see that the control group g
 
 ### Problem 3 Simulation
 
-```{r eval=FALSE}
+```{r}
 sim_t <- function(mu){
   sim_data <- tibble(
     tibble(
       true_mu = mu, # decided to have the true mean in the tibble
-      x = rerun(50, rnorm(n=30, mean=mu, sd=5))
+      x = rerun(5000, rnorm(n=30, mean=mu, sd=5))
     )) %>%
   mutate(
     t_tests = map(.x = x, ~t.test(x=.x, mu=0)),
     tidy_t = map(.x = t_tests, ~broom::tidy(.x))
     ) %>%
     select(-t_tests) %>%
-unnest(tidy_t) %>%
-select(true_mu, estimate, p.value)
+    unnest(tidy_t) %>%
+    select(true_mu, estimate, p.value)
 }
 
-output <- vector("list", 7)
-for (i in 1:7){
-  output[[i]] = sim_t(i-1) %>% # for values of mu = 0 to 6
-    bind_rows
+output <- sim_t(mu=0) # doing this for mu=0 before repeating
+
+for (i in 1:6){
+  temp <- sim_t(i)
+  output <- bind_rows(output, temp) # repeating for values of mu = 1 to 6
 }
-
-
-# how can I make these into one big list into one broken up into 7??
-# unnest at the end
-
-sim_t2 <- function(mu){
-  sim_data <- tibble(
-    tibble(
-      true_mu = mu, # decided to have the true mean in the tibble
-      x = rnorm(n=30, mean=mu, sd=5)
-    )) %>%
-  mutate(
-    t_tests = map(.x = x, ~t.test(x=.x, mu=0)),
-    tidy_t = map(.x = t_tests, ~broom::tidy(.x))
-    ) %>%
-    select(-t_tests)
-}
-
-output2 <- vector("list", 7)
-
-sim_res <-
-  tibble(true_mu = c(0:6)) %>%
-  mutate(
-    output_list = map(.x = true_mu, ~rerun(50, sim_t2(mu = .x))),
-    estimate_dfs = map(output_list, bind_rows)) %>%
-  select(-output_list) %>%
-  unnest(estimate_dfs)
 ```
 
 
