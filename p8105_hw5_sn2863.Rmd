@@ -206,7 +206,7 @@ bind_rows(estimate_df, estimate_reject_df) %>%
   labs(
     title = "Average Estimates of the Mean From Simulation vs True Mean",
     x = "True Mean",
-    y = "Average Mean Estimate",
+    y = "Average Sample Mean Estimate",
     caption = "Data from a simulation of 5000 values from a normal distribution with n = 30, sd = 5, and true mu varying from 0 to 6."
     ) 
 ```
