@@ -8,6 +8,7 @@ output: github_document
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(purrr)
+library(patchwork)
 
 knitr::opts_chunk$set(
   fig.width = 8,
@@ -118,9 +119,9 @@ tidy_df %>%
   facet_grid(~arm)+
   theme(legend.position = "none") +
   scale_color_manual(values=c("#39568CFF", "#55C667FF")) +
-  geom_point(aes(color=arm)) +
-  geom_line(aes(color=arm)) +
-    labs(
+  geom_point(aes(color=arm), alpha = 0.5) +
+  geom_line(aes(color=arm), alpha = 0.5) +
+  labs(
     title = "Spaghetti Plot of Longitudinal Data",
     x = "Week",
     y = "Value in Units of Observation",
@@ -133,7 +134,7 @@ Looking at the two panels of the spaghetti plot, we see that the control group g
 
 ### Problem 3 Simulation
 
-```{r}
+```{r message=FALSE}
 sim_t <- function(mu){
   sim_data <- tibble(
     tibble(
@@ -165,12 +166,12 @@ decision_df <-
     decision = case_when(
       p.value >= 0.05 ~ "fail to reject",
       p.value < 0.05 ~ "reject")
-  ) %>%
-  filter(decision == "reject") %>%
-  group_by(true_mu) %>%
-  summarize(power = n()/5000)
+  )
 
 decision_df %>%
+  filter(decision == "reject") %>%
+  group_by(true_mu) %>%
+  summarize(power = n()/5000) %>%
   ggplot(aes(x = true_mu, y = power)) +
   geom_line(color = "#39568CFF", size = 1, alpha=0.5) +
   labs(
@@ -181,6 +182,37 @@ decision_df %>%
   )
 ```
 
-The association between effect size and power is that they are directly related -- i.e., the greater the effect size, the greater the power of out study. This is because if we have a true value that is further away from our null hypothesis value, then we would be more likely to reject the null. Hence, power increases, as seen in the plot.
+The association between effect size and power is that they are directly related -- i.e., the greater the effect size, the greater the power of our study. This is because if we have a true value that is further away from our null hypothesis value, then we would be more likely to reject the null. Hence, power increases, as seen in the plot.
 
-**Plots showing he average estimate vs the true value of mu, and the average estimate of mu only in samples for which the null was rejected vs the true value of mu.**
+**Plot showing the average estimate of all samples and the average estimate of mu only in samples for which the null was rejected vs the true value of mu.**
+```{r message=FALSE}
+estimate_df <-
+  decision_df %>%
+  group_by(true_mu) %>%
+  summarize(avg_estimate = mean(estimate)) %>%
+  mutate(estimate_type = "all samples")
+
+estimate_reject_df <-
+  decision_df %>%
+  filter(decision == "reject") %>%
+  group_by(true_mu) %>%
+  summarize(avg_estimate = mean(estimate)) %>%
+  mutate(estimate_type = "rejected samples") 
+
+bind_rows(estimate_df, estimate_reject_df) %>%
+  ggplot(aes(x = true_mu, y = avg_estimate)) +
+  scale_color_manual(values=c("#39568CFF", "#55C667FF")) +
+  geom_line(aes(color = estimate_type))+
+  labs(
+    title = "Average Estimates of the Mean From Simulation vs True Mean",
+    x = "True Mean",
+    y = "Average Mean Estimate",
+    caption = "Data from a simulation of 5000 values from a normal distribution with n = 30, sd = 5, and true mu varying from 0 to 6."
+    ) 
+```
+
+Clarifying the legend: the blue line represents the average estimates of mu in all samples. The green line represents the average estimates of mu in samples, but only for which the null hypothesis was rejected.
+
+The sample average of our estimated mean across tests for which the null is rejected is only approximately equal as we get to higher values of our true mu's. This is because when we simulated samples with higher true means, we have a larger detectable effect size, which would allow us to more correctly reject the null hypothesis. This again, has to do with statistical power.
+
+In the same vein, we see that for the lower values of true mean, 1 and 2, there is quite a bit of a gap between the average estimates from our sample versus from the samples only when the null hypothesis was rejected.
